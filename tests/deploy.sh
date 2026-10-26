@@ -20,6 +20,11 @@ curl() {
     [[ "$*" == *https://denors.site-laboratory.ru/* ]] || {
         echo 'Expected HTTPS smoke URL.' >&2; return 1;
     }
+    if [[ "$*" != *--config* ]]; then
+        printf '%s' "${ANONYMOUS_STATUS:-401}"
+        return 0
+    fi
+    [[ "$*" == *"$TEST_ROOT/.deploy/smoke.curl"* ]] || return 1
 if [[ "$*" == *denors-release.txt* ]]; then
     [[ "${FAIL_SMOKE:-0}" != 1 ]] || exit 22
     cat "$TEST_ROOT/public_html/denors-release.txt"
@@ -33,11 +38,14 @@ fi
 }
 export -f curl
 export TEST_ROOT="$scratch/site"
-mkdir -p "$TEST_ROOT/public_html/assets/css" "$TEST_ROOT/public_html/cgi-bin" "$TEST_ROOT/.deploy/incoming" "$TEST_ROOT/releases"
+mkdir -p "$TEST_ROOT/public_html/assets/css" "$TEST_ROOT/public_html/cgi-bin" "$TEST_ROOT/.deploy/incoming" "$TEST_ROOT/releases" "$TEST_ROOT/shared"
+printf 'test-only' > "$TEST_ROOT/shared/staging.htpasswd"
+printf 'test-only' > "$TEST_ROOT/.deploy/smoke.curl"
 printf 'original-settings' > "$TEST_ROOT/public_html/cgi-bin/settings.ini"
 printf 'private-setting' > "$TEST_ROOT/.env"
 printf '<?php echo "placeholder";' > "$scratch/source/public/index.php"
 printf 'User-agent: *\nDisallow: /\n' > "$scratch/source/public/robots.txt"
+printf 'Options -Indexes\n' > "$scratch/source/public/.htaccess"
 sed -e "s|^root=.*|root=$TEST_ROOT|" "$repo/scripts/deploy/activate-staging.sh" > "$scratch/activate.sh"
 commit=1111111111111111111111111111111111111111
 make_archive() {
@@ -63,4 +71,10 @@ if bash "$scratch/activate.sh" "$id" "$(printf '%064d' 0)" "$commit"; then
     echo 'Expected checksum failure' >&2; exit 1
 fi
 [[ "$(readlink -f "$TEST_ROOT/public_html")" == "$first" ]]
-echo 'PASS: initial switch, retained CGI/env, HTTP failure rollback, checksum refusal.'
+id=20261026T200003Z-111111111111
+make_archive "$id"
+if ANONYMOUS_STATUS=200 bash "$scratch/activate.sh" "$id" "$checksum" "$commit"; then
+    echo 'Expected refusal when anonymous access is allowed.' >&2; exit 1
+fi
+[[ "$(readlink -f "$TEST_ROOT/public_html")" == "$first" ]]
+echo 'PASS: switch, retained CGI/env, HTTP rollback, checksum refusal, anonymous access refusal.'

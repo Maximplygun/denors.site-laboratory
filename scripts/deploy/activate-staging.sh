@@ -36,6 +36,23 @@ if [[ -d "$release/database/migrations" ]] && find "$release/database/migrations
     echo 'A migration runner must be configured before deploying database changes.' >&2; exit 1
 fi
 while IFS= read -r -d '' file; do "$php" -l "$file" >/dev/null; done < <(find "$release" -type f -name '*.php' -print0)
+[[ -f "$root/shared/staging.htpasswd" && -f "$root/.deploy/smoke.curl" ]] || {
+    echo 'Create staging credentials first: bash scripts/deploy/setup-access.sh (locally).' >&2
+    exit 1
+}
+[[ -f "$release/public/.htaccess" ]]
+cat >> "$release/public/.htaccess" <<AUTH
+
+# Private staging access. Only a narrow ACME challenge path is exempt.
+AuthType Basic
+AuthName "Denors staging"
+AuthUserFile "$root/shared/staging.htpasswd"
+SetEnvIf Request_URI "^/\\.well-known/acme-challenge/[A-Za-z0-9_-]+$" denors_acme
+<RequireAny>
+    Require env denors_acme
+    Require valid-user
+</RequireAny>
+AUTH
 # Initial setup accepts only the known empty root and preserves cgi-bin settings.
 web="$root/public_html"
 initial=false
@@ -84,10 +101,15 @@ else
     mv -Tf "$next" "$web"
 fi
 switched=true
-actual=$(curl -4 --noproxy '*' --connect-timeout 10 --max-time 30 -fsS "$url/denors-release.txt?release=$id")
+# Do not inherit ~/.curlrc: anonymous and authenticated checks must be distinct.
+for path in "/?release=$id" "/denors-release.txt?release=$id" /robots.txt; do
+    anonymous=$(curl -q -4 --noproxy '*' --connect-timeout 10 --max-time 30 -sS -o /dev/null -w '%{http_code}' "$url$path")
+    [[ "$anonymous" == 401 ]] || { echo 'Staging access protection failed (expected anonymous 401).' >&2; exit 1; }
+done
+actual=$(curl -q --config "$root/.deploy/smoke.curl" -4 --noproxy '*' --connect-timeout 10 --max-time 30 -fsS "$url/denors-release.txt?release=$id")
 [[ "$actual" == "$commit" ]]
 headers="$root/.deploy/headers-$id"
-status=$(curl -4 --noproxy '*' --connect-timeout 10 --max-time 30 -sS -D "$headers" -o /dev/null -w '%{http_code}' "$url/?release=$id")
+status=$(curl -q --config "$root/.deploy/smoke.curl" -4 --noproxy '*' --connect-timeout 10 --max-time 30 -sS -D "$headers" -o /dev/null -w '%{http_code}' "$url/?release=$id")
 # The staging placeholder is reachable for hosting and certificate preflight.
 [[ "$status" == 200 ]]
 grep -Eiq '^X-Robots-Tag:.*noindex' "$headers"
@@ -97,4 +119,4 @@ mv -Tf "$previous_next" "$root/.deploy/previous-public"
 printf '%s\n' "$commit" > "$root/.deploy/deployed-commit"
 switched=false
 rm -f -- "$archive" "$headers"
-echo "Staging deployed: $id ($commit). HTTP 200 + noindex verified."
+echo "Staging deployed: $id ($commit). HTTPS: anonymous 401, authenticated 200 + noindex verified."
