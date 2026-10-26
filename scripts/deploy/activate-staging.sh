@@ -104,7 +104,11 @@ switched=true
 # Do not inherit ~/.curlrc: anonymous and authenticated checks must be distinct.
 for path in "/?release=$id" "/denors-release.txt?release=$id" /robots.txt; do
     anonymous=$(curl -q -4 --noproxy '*' --connect-timeout 10 --max-time 30 -sS -o /dev/null -w '%{http_code}' "$url$path")
-    [[ "$anonymous" == 401 ]] || { echo 'Staging access protection failed (expected anonymous 401).' >&2; exit 1; }
+    printf 'Anonymous access check: %s -> HTTP %s\n' "$path" "$anonymous"
+    [[ "$anonymous" == 401 ]] || {
+        printf 'Staging protection failed: %s returned HTTP %s; expected 401.\n' "$path" "$anonymous" >&2
+        exit 1
+    }
 done
 actual=$(curl -q --config "$root/.deploy/smoke.curl" -4 --noproxy '*' --connect-timeout 10 --max-time 30 -fsS "$url/denors-release.txt?release=$id")
 [[ "$actual" == "$commit" ]]
