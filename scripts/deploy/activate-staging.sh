@@ -25,7 +25,7 @@ release="$root/releases/$id"
 printf '%s  %s\n' "$checksum" "$archive" | sha256sum -c -
 "$php" -r 'exit(version_compare(PHP_VERSION,"8.3.0",">=") ? 0 : 1);'
 # Only archives made from the repository are accepted; exclude private runtime.
-if tar -tf "$archive" | grep -E '(^/|(^|/)\.\.(/|$)|^\.env($|\.)|^storage/|^public/uploads/|^public_html/)'; then
+if tar -tf "$archive" | grep -vx '\.env\.example' | grep -E '(^/|(^|/)\.\.(/|$)|^\.env($|\.)|^storage/|^public/uploads/|^public_html/)'; then
     echo 'Archive contains prohibited paths.' >&2; exit 1
 fi
 mkdir "$release"
@@ -36,6 +36,9 @@ if [[ -d "$release/database/migrations" ]] && find "$release/database/migrations
     echo 'A migration runner must be configured before deploying database changes.' >&2; exit 1
 fi
 while IFS= read -r -d '' file; do "$php" -l "$file" >/dev/null; done < <(find "$release" -type f -name '*.php' -print0)
+if [[ -f "$release/tests/application.php" ]]; then
+    "$php" "$release/tests/application.php"
+fi
 [[ -f "$root/shared/staging.htpasswd" && -f "$root/.deploy/smoke.curl" ]] || {
     echo 'Create staging credentials first: bash scripts/deploy/setup-access.sh (locally).' >&2
     exit 1
