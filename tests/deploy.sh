@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Local integration test: isolated filesystem and fake HTTP/lock/PHP tools.
-set -euo pipefail
+set -Eeuo pipefail
+trap 'code=$?; printf "Self-test failed at line %s (exit %s).\n" "$LINENO" "$code" >&2' ERR
+echo 'Starting isolated release test...'
 case "$(uname -s)" in
     Linux) ;;
     *) echo 'SKIP: this integration test requires Linux symlink semantics.'; exit 77 ;;
@@ -11,12 +13,10 @@ scratch=$(mktemp -d "$test_parent/denors-deploy-test.XXXXXXXX")
 scratch=$(realpath "$scratch")
 [[ "$(dirname "$scratch")" == "$test_parent" && "$(basename "$scratch")" == denors-deploy-test.* ]]
 trap 'rm -rf -- "$scratch"' EXIT
-mkdir -p "$scratch/bin" "$scratch/source/public"
-printf '%s\n' '#!/usr/bin/env bash' 'exit 0' > "$scratch/bin/flock"
-printf '%s\n' '#!/usr/bin/env bash' 'exit 0' > "$scratch/bin/test-php"
-cat > "$scratch/bin/curl" <<'CURL'
-#!/usr/bin/env bash
-set -eu
+mkdir -p "$scratch/source/public"
+# Export a shell function: /tmp may be mounted noexec on shared hosting.
+# PHP and flock use the actual host binaries; only HTTP is simulated.
+curl() {
 if [[ "$*" == *denors-release.txt* ]]; then
     [[ "${FAIL_SMOKE:-0}" != 1 ]] || exit 22
     cat "$TEST_ROOT/public_html/denors-release.txt"
@@ -27,16 +27,15 @@ else
     done
     printf 503
 fi
-CURL
-chmod +x "$scratch/bin/"*
-export PATH="$scratch/bin:$PATH"
+}
+export -f curl
 export TEST_ROOT="$scratch/site"
 mkdir -p "$TEST_ROOT/public_html/assets/css" "$TEST_ROOT/public_html/cgi-bin" "$TEST_ROOT/.deploy/incoming" "$TEST_ROOT/releases"
 printf 'original-settings' > "$TEST_ROOT/public_html/cgi-bin/settings.ini"
 printf 'private-setting' > "$TEST_ROOT/.env"
 printf '<?php echo "placeholder";' > "$scratch/source/public/index.php"
 printf 'User-agent: *\nDisallow: /\n' > "$scratch/source/public/robots.txt"
-sed -e "s|^root=.*|root=$TEST_ROOT|" -e "s|^php=.*|php=$scratch/bin/test-php|" "$repo/scripts/deploy/activate-staging.sh" > "$scratch/activate.sh"
+sed -e "s|^root=.*|root=$TEST_ROOT|" "$repo/scripts/deploy/activate-staging.sh" > "$scratch/activate.sh"
 commit=1111111111111111111111111111111111111111
 make_archive() {
     tar -cf "$TEST_ROOT/.deploy/incoming/$1.tar" -C "$scratch/source" public

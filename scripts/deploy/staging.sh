@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Run in LOCAL Git Bash. Deploys committed code only, never runtime data.
-set -euo pipefail
+set -Eeuo pipefail
+trap 'code=$?; printf "Staging command failed at line %s (exit %s).\n" "$LINENO" "$code" >&2' ERR
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 cd "$repo"
 host=ci11012@vh310.timeweb.ru
