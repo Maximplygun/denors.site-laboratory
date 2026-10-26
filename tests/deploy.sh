@@ -25,7 +25,7 @@ else
         if [[ "$1" == -D ]]; then shift; printf 'X-Robots-Tag: noindex\r\n' > "$1"; fi
         shift
     done
-    printf 503
+    printf 200
 fi
 }
 export -f curl

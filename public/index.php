@@ -2,11 +2,10 @@
 declare(strict_types=1);
 
 // Infrastructure placeholder; the store application is not implemented yet.
-http_response_code(503);
+http_response_code(200);
 header('Content-Type: text/html; charset=UTF-8');
 header('X-Robots-Tag: noindex, nofollow, noarchive');
 header('Cache-Control: no-store');
-header('Retry-After: 3600');
 ?>
 <!doctype html>
 <html lang="ru">

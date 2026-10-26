@@ -88,8 +88,8 @@ actual=$(curl -4 --noproxy '*' --connect-timeout 10 --max-time 30 -fsS "$url/den
 [[ "$actual" == "$commit" ]]
 headers="$root/.deploy/headers-$id"
 status=$(curl -4 --noproxy '*' --connect-timeout 10 --max-time 30 -sS -D "$headers" -o /dev/null -w '%{http_code}' "$url/?release=$id")
-# Infrastructure placeholder intentionally returns 503; adapt checks with the app.
-[[ "$status" == 503 ]]
+# The staging placeholder is reachable for hosting and certificate preflight.
+[[ "$status" == 200 ]]
 grep -Eiq '^X-Robots-Tag:.*noindex' "$headers"
 previous_next="$root/.deploy/previous-next-$id"
 ln -s "$old" "$previous_next"
@@ -97,4 +97,4 @@ mv -Tf "$previous_next" "$root/.deploy/previous-public"
 printf '%s\n' "$commit" > "$root/.deploy/deployed-commit"
 switched=false
 rm -f -- "$archive" "$headers"
-echo "Staging deployed: $id ($commit). HTTP 503 + noindex verified."
+echo "Staging deployed: $id ($commit). HTTP 200 + noindex verified."
