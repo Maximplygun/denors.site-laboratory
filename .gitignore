@@ -1,0 +1,41 @@
+# Secrets and machine-specific configuration
+.env
+.env.*
+!.env.example
+/config/local.php
+/auth.json
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Dependencies
+/vendor/
+/node_modules/
+
+# Runtime and uploads (never deploy over live data)
+/storage/**
+/public/uploads/
+/public_html/uploads/
+/public/wp-content/uploads/
+/public_html/wp-content/uploads/
+*.log
+*.sql
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db
+/backups/
+/releases/
+/shared/
+/tmp/
+/temp/
+/.deploy/
+
+# Local tools
+/.idea/
+/.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
