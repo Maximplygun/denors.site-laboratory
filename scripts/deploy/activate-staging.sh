@@ -4,7 +4,7 @@ set -Eeuo pipefail
 trap 'code=$?; printf "Activation failed at line %s (exit %s).\n" "$LINENO" "$code" >&2' ERR
 umask 077
 root=/home/c/ci11012/denors.site-laboratory.ru
-url=http://denors.site-laboratory.ru
+url=https://denors.site-laboratory.ru
 php=/opt/php83/bin/php
 id=${1:?Release ID required}
 checksum=${2:?Archive checksum required}

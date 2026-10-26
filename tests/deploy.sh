@@ -17,6 +17,9 @@ mkdir -p "$scratch/source/public"
 # Export a shell function: /tmp may be mounted noexec on shared hosting.
 # PHP and flock use the actual host binaries; only HTTP is simulated.
 curl() {
+    [[ "$*" == *https://denors.site-laboratory.ru/* ]] || {
+        echo 'Expected HTTPS smoke URL.' >&2; return 1;
+    }
 if [[ "$*" == *denors-release.txt* ]]; then
     [[ "${FAIL_SMOKE:-0}" != 1 ]] || exit 22
     cat "$TEST_ROOT/public_html/denors-release.txt"
