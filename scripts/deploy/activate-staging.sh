@@ -39,23 +39,12 @@ while IFS= read -r -d '' file; do "$php" -l "$file" >/dev/null; done < <(find "$
 if [[ -f "$release/tests/application.php" ]]; then
     "$php" "$release/tests/application.php"
 fi
-[[ -f "$root/shared/staging.htpasswd" && -f "$root/.deploy/smoke.curl" ]] || {
-    echo 'Create staging credentials first: bash scripts/deploy/setup-access.sh (locally).' >&2
-    exit 1
-}
+if [[ -f "$release/tests/routing.php" ]]; then
+    "$php" "$release/tests/routing.php"
+fi
 [[ -f "$release/public/.htaccess" ]]
-cat >> "$release/public/.htaccess" <<AUTH
-
-# Private staging access. Only a narrow ACME challenge path is exempt.
-AuthType Basic
-AuthName "Denors staging"
-AuthUserFile "$root/shared/staging.htpasswd"
-SetEnvIf Request_URI "^/\\.well-known/acme-challenge/[A-Za-z0-9_-]+$" denors_acme
-<RequireAny>
-    Require env denors_acme
-    Require valid-user
-</RequireAny>
-AUTH
+# Owner postponed Basic Auth for this technical domain on 2026-10-29.
+# Keep HTTPS, private runtime and noindex; do not consume old smoke credentials.
 # Initial setup accepts only the known empty root and preserves cgi-bin settings.
 web="$root/public_html"
 initial=false
@@ -104,19 +93,13 @@ else
     mv -Tf "$next" "$web"
 fi
 switched=true
-# Do not inherit ~/.curlrc: anonymous and authenticated checks must be distinct.
-for path in "/?release=$id" "/denors-release.txt?release=$id" /robots.txt; do
-    anonymous=$(curl -q -4 --noproxy '*' --connect-timeout 10 --max-time 30 -sS -o /dev/null -w '%{http_code}' "$url$path")
-    printf 'Anonymous access check: %s -> HTTP %s\n' "$path" "$anonymous"
-    [[ "$anonymous" == 401 ]] || {
-        printf 'Staging protection failed: %s returned HTTP %s; expected 401.\n' "$path" "$anonymous" >&2
-        exit 1
-    }
-done
-actual=$(curl -q --config "$root/.deploy/smoke.curl" -4 --noproxy '*' --connect-timeout 10 --max-time 30 -fsS "$url/denors-release.txt?release=$id")
+# Ignore user curl defaults and require valid TLS without credentials.
+actual=$(curl -q -4 --noproxy '*' --connect-timeout 10 --max-time 30 -fsS "$url/denors-release.txt?release=$id")
 [[ "$actual" == "$commit" ]]
+robots=$(curl -q -4 --noproxy '*' --connect-timeout 10 --max-time 30 -fsS "$url/robots.txt?release=$id")
+printf '%s\n' "$robots" | grep -Eq '^Disallow: /[[:space:]]*$'
 headers="$root/.deploy/headers-$id"
-status=$(curl -q --config "$root/.deploy/smoke.curl" -4 --noproxy '*' --connect-timeout 10 --max-time 30 -sS -D "$headers" -o /dev/null -w '%{http_code}' "$url/?release=$id")
+status=$(curl -q -4 --noproxy '*' --connect-timeout 10 --max-time 30 -sS -D "$headers" -o /dev/null -w '%{http_code}' "$url/?release=$id")
 # The staging placeholder is reachable for hosting and certificate preflight.
 [[ "$status" == 200 ]]
 grep -Eiq '^X-Robots-Tag:.*noindex' "$headers"
@@ -126,4 +109,4 @@ mv -Tf "$previous_next" "$root/.deploy/previous-public"
 printf '%s\n' "$commit" > "$root/.deploy/deployed-commit"
 switched=false
 rm -f -- "$archive" "$headers"
-echo "Staging deployed: $id ($commit). HTTPS: anonymous 401, authenticated 200 + noindex verified."
+echo "Staging deployed: $id ($commit). HTTPS 200 + noindex verified."

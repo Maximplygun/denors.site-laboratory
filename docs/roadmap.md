@@ -10,7 +10,7 @@
 | 1 | Аудит Timeweb | BLOCKED |
 | 2 | Git и staging (владелец разрешил параллельно завершению аудита) | IN PROGRESS |
 | 3 | Архитектура (локально по разрешению владельца) | REVIEW |
-| 4 | База и маршрутизация | TODO |
+| 4 | База и маршрутизация | IN PROGRESS |
 | 5 | Дизайн-система | TODO |
 | 6 | Header и footer | TODO |
 | 7 | Главная | TODO |
@@ -154,3 +154,43 @@ robots и 6 дочерних sitemap Yoast. Собраны 734 записи, 733
 сохранён CSV docs/audit/legacy-urls.csv и отчёт docs/audit/legacy-site.md.
 Статусы/canonical всех страниц ещё не проверены, экспорт WordPress отсутствует.
 Обнаруженные исторические префиксы не менялись; маршруты и БД не создавались.
+
+## 29.10.2026 — разрешение продолжить без полной Basic Auth
+
+Поддержка подтвердила отсутствие управления Nginx на тарифе; владелец отложил
+защиту технического домена и разрешил продолжить создание сайта. Это явное
+изменение прежнего условия публикации. Production будет на другом хостинге.
+HTTPS, noindex, приватное хранение секретов и защита будущей админки сохраняются.
+Резервные копии нового проекта пока не подтверждены, работа по разрешению
+владельца продолжается. Полный аудит окружения не помечен завершённым.
+
+## День 4 — промежуточный результат
+
+ЗАДАЧИ: убрать обязательную Auth из staging deploy, реализовать точный Router,
+контроллер главной, безопасный View и 404.
+
+РЕАЛИЗОВАНО: исходные пути без нормализации и автоматических редиректов,
+HEAD/405/400, rewrite в index.php, отдельный шаблон 404. Deploy больше не
+использует private Basic token, сохраняет HTTPS/noindex/checksum/tests/rollback.
+Linux self-test обновлён: успех без credentials, возврат при HTTP/500,
+отклонение плохой checksum и архива с .env; .env.example разрешён.
+
+ИЗМЕНЁННЫЕ ФАЙЛЫ: app/Routing/Router.php, app/Support/View.php,
+app/Controllers/HomeController.php, app/Application.php,
+resources/views/errors/not-found.php, public/.htaccess, tests/routing.php,
+tests/deploy.sh, scripts/deploy/activate-staging.sh, README.md и docs.
+
+ПРОВЕРКИ: PHP lint, 15 application и 748 routing checks; реальные локальные
+HTTP GET 200/noindex, HEAD без тела, POST 405, unknown/private/unimported 404.
+Bash syntax и git diff --check прошли. Временный сервер остановлен.
+Apache rewrite, Linux self-test новой версии и текущий deploy на Timeweb
+ещё не проверены; Lighthouse/визуальный аудит не проводились.
+
+ОГРАНИЧЕНИЯ: схемы доменной БД и импорта ещё нет — экспорт не предоставлен.
+733 пути проверены на тестовом реестре, пустые страницы в приложении не созданы.
+БД и действующий denors.ru не менялись.
+
+GIT: отдельная feature/exact-routing; commit/push сообщаются по результату.
+СТАТУС: IN PROGRESS — маршрутизатор готов локально, доменная БД ожидает экспорта.
+СЛЕДУЮЩЕЕ: публикация PHP-каркаса через denors, проверка Apache rewrite на Timeweb;
+затем независимая подготовка дизайн-системы, без фиктивных цен/товаров/отзывов.
