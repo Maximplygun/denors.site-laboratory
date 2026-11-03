@@ -2,7 +2,8 @@
     <div class="container site-footer__grid">
         <div class="site-footer__intro stack">
             <?php require __DIR__ . '/site-brand.php'; ?>
-            <p class="muted">ООО «ДЕНОРС»<br>Продажа, монтаж и обслуживание<br>систем безопасности.</p>
+            <p class="muted">ООО «ДЕНОРС»</p>
+            <p class="muted">Продажа, монтаж и техническое обслуживание систем безопасности объектов!</p>
             <nav class="site-footer__nav" aria-label="Навигация в подвале">
                 <a href="/">На главную</a>
                 <a href="#main">К содержимому</a>
