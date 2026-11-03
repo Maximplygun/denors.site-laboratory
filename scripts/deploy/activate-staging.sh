@@ -45,6 +45,9 @@ fi
 if [[ -f "$release/tests/catalog.php" ]]; then
     "$php" "$release/tests/catalog.php"
 fi
+if [[ -f "$release/tests/product.php" ]]; then
+    "$php" "$release/tests/product.php"
+fi
 [[ -f "$release/public/.htaccess" ]]
 # Owner postponed Basic Auth for this technical domain on 2026-10-29.
 # Keep HTTPS, private runtime and noindex; do not consume old smoke credentials.
