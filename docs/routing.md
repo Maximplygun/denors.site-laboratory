@@ -36,3 +36,7 @@ Canonical в production не генерируется пока не опреде
 
 Схема доменной БД и миграции ещё не реализованы: нужен фактический экспорт
 WooCommerce/WordPress с ID, связями, атрибутами и Yoast. БД не изменялась.
+
+HTTP-приёмка Дня 4: [day4-acceptance.md](day4-acceptance.md).
+Скрипт tests/http-staging.sh проверяет фактические ответы staging без редиректов
+и отключения TLS. Локальный запуск не подтверждает rewrite на Timeweb.
