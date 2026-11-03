@@ -1,0 +1,36 @@
+/* Local font declarations are kept in fonts.css. No remote runtime requests. */
+*, *::before, *::after { box-sizing: border-box; }
+html { font-size: 100%; }
+body {
+    margin: 0;
+    background: var(--color-canvas);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { line-height: 1.2; font-weight: 600; }
+h1 { font-size: var(--text-title); letter-spacing: -0.035em; }
+h2 { font-size: clamp(1.4rem, 1.2rem + 0.5vw, 1.75rem); letter-spacing: -0.02em; }
+h3 { font-size: var(--text-lg); }
+a { color: var(--color-brand); text-underline-offset: 0.2em; }
+a:hover { color: var(--color-brand-hover); }
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; }
+img, svg { max-width: 100%; height: auto; }
+[hidden] { display: none !important; }
+.container { width: min(var(--container-width), calc(100% - 2rem)); margin-inline: auto; }
+.stack > * + * { margin-block-start: var(--space-4); }
+.muted { color: var(--color-muted); }
+.eyebrow { font-size: var(--text-sm); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.skip-link { position: fixed; top: 1rem; left: 1rem; z-index: 10; padding: 0.75rem 1rem; background: var(--color-surface); transform: translateY(-200%); }
+.skip-link:focus { transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (forced-colors: active) {
+    :focus-visible { outline-color: Highlight; }
+}
