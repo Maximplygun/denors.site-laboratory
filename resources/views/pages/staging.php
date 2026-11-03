@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Денорс — тестовое окружение</title>
-    <link rel="stylesheet" href="/assets/css/fonts.css?v=day5">
-    <link rel="stylesheet" href="/assets/css/tokens.css?v=day5">
-    <link rel="stylesheet" href="/assets/css/base.css?v=day5">
-    <link rel="stylesheet" href="/assets/css/components.css?v=day5">
+    <?php require dirname(__DIR__) . '/components/site-styles.php'; ?>
     <link rel="stylesheet" href="/assets/css/design-preview.css?v=day5">
 </head>
-<body>
+<body class="site-page">
     <a class="skip-link" href="#main">К содержимому</a>
+    <?php require dirname(__DIR__) . '/components/site-header.php'; ?>
     <main class="container design-preview" id="main" tabindex="-1">
         <div class="design-preview__intro">
             <div class="design-preview__meta">
@@ -73,5 +71,6 @@
             </section>
         </div>
     </main>
+    <?php require dirname(__DIR__) . '/components/site-footer.php'; ?>
 </body>
 </html>
