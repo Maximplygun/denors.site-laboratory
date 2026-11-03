@@ -35,7 +35,7 @@ try {
     }
     $app = new Application(dirname(__DIR__) . '/resources/views');
     $home = $app->handle('GET', '/?source=test');
-    $assert($home->status === 200 && str_contains($home->body, '<h1>'), 'home renders via view');
+    $assert($home->status === 200 && preg_match('/<h1(?:\s[^>]*)?>/', $home->body) === 1, 'home renders via view');
     $assert(str_contains($home->headers['X-Robots-Tag'], 'noindex'), 'staging is not indexable');
     $assert($app->handle('GET', '/not-imported/')->status === 404, 'unknown legacy path stays 404');
     $assert($app->handle('GET', '/app/Support/Logger.php')->status === 404, 'private path not routed');

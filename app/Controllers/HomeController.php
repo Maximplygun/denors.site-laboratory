@@ -12,6 +12,6 @@ final readonly class HomeController
 
     public function __invoke(): Response
     {
-        return new Response($this->view->render('pages/staging'));
+        return new Response($this->view->render('pages/home'));
     }
 }
